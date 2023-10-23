@@ -1,12 +1,16 @@
 import express from 'express';
 import path from 'path';
-// Importez `readFileSync` pour lire le fichier JSON
-import { readFileSync } from 'fs';
-
-const config = JSON.parse(readFileSync(path.resolve(__dirname, 'config', 'config.json'), 'utf-8'));
-import ejs from "ejs";
 import fs from 'fs';
-// ...
+
+// Importez `readFileSync` pour lire le fichier JSON
+import { readFileSync } from 'fs/promises'; // Utilisation de 'fs/promises' pour des opérations asynchrones
+
+const currentDir = new URL('.', import.meta.url).pathname; // Obtient le chemin du répertoire du module
+const configPath = path.resolve(currentDir, 'config', 'config.json');
+const config = JSON.parse(await readFileSync(configPath, 'utf-8'));
+
+
+
 
 
 app = express();
