@@ -6,7 +6,6 @@
   "scripts": {
     "test": "nodemon index.js"
   },
-  "type": "module",
   "keywords": [
     "ToniPortal",
     "three.js"

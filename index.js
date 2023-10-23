@@ -1,16 +1,9 @@
-import express from 'express';
-import path from 'path';
-import fs from 'fs';
-
-// Importez `readFileSync` pour lire le fichier JSON
-import { readFileSync } from 'fs/promises'; // Utilisation de 'fs/promises' pour des opérations asynchrones
-
-const currentDir = new URL('.', import.meta.url).pathname; // Obtient le chemin du répertoire du module
-const configPath = path.resolve(currentDir, 'config', 'config.json');
-const config = JSON.parse(await readFileSync(configPath, 'utf-8'));
-
-
-
+//Tout les npm utilisé pour le projet.
+const express = require('express'),
+    path = require('path'),
+    config = require("./config/config.json"),
+    port = (process.env.PORT || process.env.ALWAYSDATA_HTTPD_PORT || config.port),
+    ip = (process.env.IP || process.env.ALWAYSDATA_HTTPD_IP);
 
 
 app = express();
