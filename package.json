@@ -13,10 +13,7 @@
   "author": "ToniPortal",
   "license": "MIT",
   "dependencies": {
-    "@enable3d/ammo-physics": "^0.25.4",
-    "ammo.js": "^0.0.10",
     "ejs": "^3.1.9",
-    "enable3d": "^0.25.4",
     "express": "^4.18.2",
     "path": "^0.12.7",
     "three": "^0.156.1"
