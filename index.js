@@ -3,7 +3,8 @@ const express = require('express'),
     path = require('path'),
     config = require("./config/config.json"),
     port = (process.env.PORT || process.env.ALWAYSDATA_HTTPD_PORT || config.port),
-    ip = (process.env.IP || process.env.ALWAYSDATA_HTTPD_IP);
+    ip = (process.env.IP || process.env.ALWAYSDATA_HTTPD_IP, config.ip);
+
 
 
 app = express();
@@ -12,17 +13,8 @@ app.set('view engine', 'ejs');
 
 app.use('/src', express.static(path.join(__dirname, 'src')));
 app.use('/th', express.static(path.join(__dirname, '/node_modules/three/build')));
-app.use('/enable3d', express.static(path.join(__dirname, '/node_modules/@enable3d')));
 
-
-//ENABLE 3D
-// const { enable3d, THREE, physics } = require('@enable3d/ammo-physics');
-// enable3d(app, {
-//     path: '/enable3d', // Le chemin vers enable3d sur votre serveur
-// });
-
-
-server = app.listen(port, ip, err => {
+const server = app.listen(port, ip, err => {
     err ?
         console.log("Error in server setup") :
         console.log(`Worker ${process.pid} started\nServeur lancer sur: http://localhost:${port}`);
@@ -59,3 +51,22 @@ app.use("/", route);
 // });
 
 
+// socket.io
+const io = require("socket.io")(server)
+    // server-side
+io.on("connection", (socket) => {
+    // console.log("Connection:" + socket.id); // x8WIv7-mJelg7on_ALbx
+
+    socket.conn.on("upgrade", () => {
+        const upgradedTransport = socket.conn.transport.name; // in most cases, "websocket"
+        console.log(upgradedTransport)
+    });
+
+    socket.join("game")
+
+    socket.on("servgame", (all) => {
+        // console.log(all)
+        socket.broadcast.to("game").emit("xyz", all);
+    });
+
+});

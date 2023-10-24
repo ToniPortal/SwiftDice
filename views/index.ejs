@@ -8,10 +8,21 @@
         body {
             margin: 0;
         }
+
+        #score {
+            position: absolute;
+            right: 0;
+            z-index: 100;
+            color: white;
+            font-size: xx-large;
+        }
     </style>
 </head>
 
 <body>
+    <div id="score">Score</div>
+
+    <script src="https://cdn.socket.io/4.4.1/socket.io.min.js" integrity="sha384-fKnu0iswBIqkjxrhQCTZ7qlLHOFEgNkRmK2vaO/LbTZSXdJfAu6ewRBdwHPhBo/H" crossorigin="anonymous"></script>
     <script src="/th/Three.js"></script>
     <script src="./src/js/oimo.js"></script>
     <script type="module" src="./src/js/main.js"></script>

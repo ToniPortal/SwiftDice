@@ -1,0 +1,2 @@
+bonus qui fait que les cube rouge vont a droite.
+les bonus sont débloquer uniquement a un certain palier de score
