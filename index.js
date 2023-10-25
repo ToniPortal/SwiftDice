@@ -49,24 +49,3 @@ app.use("/", route);
 //     app.use("/anime", anime);
 
 // });
-
-
-// socket.io
-const io = require("socket.io")(server)
-    // server-side
-io.on("connection", (socket) => {
-    // console.log("Connection:" + socket.id); // x8WIv7-mJelg7on_ALbx
-
-    socket.conn.on("upgrade", () => {
-        const upgradedTransport = socket.conn.transport.name; // in most cases, "websocket"
-        console.log(upgradedTransport)
-    });
-
-    socket.join("game")
-
-    socket.on("servgame", (all) => {
-        // console.log(all)
-        socket.broadcast.to("game").emit("xyz", all);
-    });
-
-});

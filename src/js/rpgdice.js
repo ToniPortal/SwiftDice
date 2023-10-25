@@ -28,8 +28,10 @@ function init() {
     // Three.js setup
     scene = new THREE.Scene();
     camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 20;
+    camera.position.set(0, 10, 30); // Position de la caméra
+    camera.lookAt(0, 0, 0); // Point de regard de la caméra
 
+    
     world = new OIMO.World({
         info: true,
         random: true,  // randomize sample
