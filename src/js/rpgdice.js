@@ -267,10 +267,14 @@ function onMouseClick(event) {
 
 
 window.onload = function () {
-    const btn = document.getElementById("btnstartgame");
-    btn.addEventListener("click", function () {
-        initstart()
-        btn.style.display = "none   "
+    const btn = document.getElementById("startgame");
+    btn.addEventListener("submit", function (e) {
+        e.preventDefault()
+        btn.style.display = "none"
+        setTimeout(function(){
+            initstart()
+        },1000)
+        
     })
 }
 
