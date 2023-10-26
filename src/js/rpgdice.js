@@ -1,7 +1,9 @@
-var scene, camera, renderer,
-    world, body1, body2, groundBody, groundLayer = 1,
-    cube1, ground,
-    dice = [], nbmaxdice = 5, maxrebonddice = 3;
+var scene, camera, renderer, // la camera et la scene
+    world, body1, body2, groundBody, groundLayer = 1, //Le sol et les corps de physique
+    cube1, ground, // Les joueurs 1 cube
+    dice = [], maxrebonddice = 3, // Les lancée de dès
+    character = [], //Correspond au variable des personnage
+    ennemy = [], choicy; //Coresspond au variable de l'ennemy
 
 function onWindowResize() {
     renderer = new THREE.WebGLRenderer();
@@ -31,7 +33,7 @@ function init() {
     camera.position.set(0, 10, 30); // Position de la caméra
     camera.lookAt(0, 0, 0); // Point de regard de la caméra
 
-    
+
     world = new OIMO.World({
         info: true,
         random: true,  // randomize sample
@@ -75,10 +77,10 @@ function init() {
     cube1.position.set(position1[0], position1[1], position1[2]);
     scene.add(cube1);
 
-    //Start les dès
-    interval();
+    //Start les dès pour l'ennemy
+    ennemyinterval(ennemy.length);
 
-    function createdice(x, y, z) {
+    function createdice(allye, x, y, z) {
         // Create cube 2
         let size2 = [1, 1, 1];
         let position2 = [x, y, z];
@@ -94,26 +96,101 @@ function init() {
         cube2.position.set(position2[0], position2[1], position2[2]);
         scene.add(cube2);
 
-        dice.push({ cube: cube2, body: body2, face: 0, rebond: 0, force: { x: rand(-3, 3), y: rand(6, 10), z: rand(-3, 3) }, rotation: { x: 5, y: 5, z: 5 } });
+        dice.push({ cube: cube2, body: body2, face: 0, rebond: 0, ally: allye, force: { x: rand(-3, 3), y: rand(6, 10), z: rand(-3, 3) }, rotation: { x: 5, y: 5, z: 5 } });
     }
 
     var interdice;
 
-    function interval() {
+    function allyinterval(nbmaxdice) {
         let x = 0
         interdice = setInterval((e) => {
             if (dice.length < nbmaxdice) {
-                createdice(x, 5, 0);
+                createdice(true, x, 5, 0);
                 x += 0.2;
             } else {
-                clearInterval(interdice)
+                clearInterval(interdice) //Finir les lancer des dès
+                //Ally Commencer a dire qui il va attaquer et les attaquer.
             }
         }, 1000);
+    }
+
+    function ennemyinterval(nbmaxdice) {
+        interdice = setInterval((e) => {
+            if (dice.length < nbmaxdice) {
+                createdice(false, 0, 5, 0);
+            } else {
+                clearInterval(interdice) //Finir les lancer des dès
+                //Ennemy Commencer a dire qui il va attaquer et les attaquer.
+            }
+        }, 1000);
+    }
+
+
+
+}
+
+function createcharacter() {
+    document.getElementById("ennemydiv").style = `position: relative;bottom: 460px;left: ${window.innerWidth / 1.19}px;`
+
+    let i = 1;
+    while (i < 6) {
+
+        const selectElement = document.querySelector(`select[name="classe${i}"]`);
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const selectedText = selectedOption.text;
+        changename(selectedText, i)
+
+        i++;
+    }
+
+
+}
+
+function createennemy() {
+    let nbennemy = 1; // Initialiser nombre d'ennemy
+    //Changer le nb de monstre par rapport a la difficulter du nombre de monstre
+    if (choicy.difficulty == "option1") {
+        nbennemy = 1; //Si c'est facile
+    } else if (choicy.difficulty == "option2") {
+        nbennemy = 2; // Si c'est normal
+    } else {
+        nbennemy = 4 //Si c'est difficile
+    }
+
+    let ennemynames = ["Nullos", "PafLEchien"]
+
+    let bl = 0;
+    while (bl < nbennemy) {
+        let randname = ennemynames[rand(0, ennemynames.length)]; 
+        ennemy.push({ name: randname })
+        document.getElementById("ennemydiv").innerHTML += `<div class="col ms-auto">
+        <div id="titreennemy${bl}" class="card wd-50 rounded-0" style="width: 15%">
+            <h5 class="card-header">${randname}</h5>
+            <div class="card-body">
+                <div class="progress" role="progressbar" aria-valuenow="100"
+                    aria-valuemin="0" aria-valuemax="100">
+                    <div class="progress-bar bg-red" style="width: 100%">10/10</div>
+                </div>
+            </div>
+        </div>
+        </div>`
+
+        bl++;
     }
 
 }
 
 
+function changename(name, nb) {
+    let t = document.getElementById(`titreclasse${nb}`);
+    t.firstElementChild.innerText = name;
+    let p = document.createElement("p")
+    p.innerText = "--"
+    p.classList.add("cart-text")
+    p.style = "margin: 0;"
+    t.lastElementChild.appendChild(p)
+
+}
 
 
 function rand(min, max) {
@@ -231,13 +308,16 @@ window.addEventListener('resize', onWindowResize, false);
 function initstart() {
     console.log("La 3D du jeu va démarrer !")
 
-    onWindowResize();
-    init();
-    animate();
+    onWindowResize(); //Resize du jeu
+
+    createcharacter(); // Création des personnage hud && dans le array
+    createennemy();
+
+    init(); // Initialisiation du jeu
+    animate(); //Animation et gestion de physique(boucle du jeu)
+    
 }
 
-// Créez un gestionnaire d'événements pour les clics sur la scène
-window.addEventListener('click', onMouseClick, false);
 
 function onMouseClick(event) {
     // Récupérez les coordonnées du clic par rapport à la fenêtre
@@ -269,14 +349,29 @@ function onMouseClick(event) {
 
 
 window.onload = function () {
-    const btn = document.getElementById("startgame");
-    btn.addEventListener("submit", function (e) {
+    const form = document.getElementById("startgameform");
+    form.addEventListener("submit", function (e) {
         e.preventDefault()
-        btn.style.display = "none"
-        setTimeout(function(){
-            initstart()
-        },1000)
-        
+
+        const formdata = new FormData(form);
+        const data = Object.fromEntries(formdata.entries());
+        let jso = JSON.parse(JSON.stringify(data));
+        choicy = jso;
+        if (jso.classe1 && jso.classe2 && jso.classe3 && jso.classe4 && jso.classe5 &&
+            jso.difficulty && jso.bonus1 && jso.bonus2) {
+            form.style.display = "none"
+            document.getElementById("hud").style.display = ""
+            setTimeout(function () {
+                // Créez un gestionnaire d'événements pour les clics sur la scène
+                window.addEventListener('click', onMouseClick, false);
+                //Init le jeu 3D
+                initstart()
+            }, 200)
+
+        } else {
+            alert("Veuillez tout remplir !")
+        }
+
     })
 }
 
