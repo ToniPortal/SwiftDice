@@ -152,8 +152,8 @@
                         <label class="form-check-label" for="inlineRadio1">Easy</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="radio" name="difficulty" id="inlineRadio2"
-                            value="option2">
+                        <input class="form-check-input" type="radio" name="difficulty" id="inlineRadio2" value="option2"
+                            checked>
                         <label class="form-check-label" for="inlineRadio2">Normal</label>
                     </div>
                     <div class="form-check form-check-inline">
@@ -202,9 +202,17 @@
 
     </form>
 
-    <div id="hud" style="display: none;position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+    <div id="hud" style="display: none;z-index: 5;position: absolute; top: 0; left: 0; width: 100%; height: 100%;">
+
+
 
         <div class="">
+            <div class="position-relative">
+                <div style="width: 150px;height: 35px;" class="position-absolute top-0 start-50 bg-gray border border-danger">
+                    <h4 style="color: black;position:relative;left: 30px;">Ennemy</h4>
+                </div>
+            </div>
+
             <div class="row flex-column">
                 <div class="col">
                     <div id="titreclasse1" class="card wd-50 rounded-0" style="width: 15%">
