@@ -233,7 +233,7 @@ function createcharacter() {
 function createennemy() {
     return new Promise((resolve) => {
 
-        document.getElementById("ennemydiv").style = `position: relative;bottom: 460px;left: ${window.innerWidth / 1.19}px;`
+        document.getElementById("ennemydiv").style = `position: relative;bottom: 460px;left: ${window.innerWidth / 1.176}px;`
 
         let nbennemy = 1; // Initialiser nombre d'ennemy
         let vpv = rand(10, 20);
