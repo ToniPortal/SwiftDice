@@ -2,7 +2,7 @@ import * as THREE from '/th/three.module.js';
 
 var scene, camera, renderer, // la camera et la scene
     world, body1, groundBody, //Le sol et les corps de physique
-    cube1, ground, // Les joueurs 1 cube
+    cube1, ground,moveplayer = true, // Les joueurs 1 cube
     dice = [], maxrebonddice = 3, // Les lancée de dès
     ennemy = [], choicy, //Coresspond au variable de l'ennemy
     ennemymain = [];
@@ -32,7 +32,9 @@ async function updateGravity(x, y, z) {
 
 }
 
-
+function affichageInfo(string){
+    alert(string)
+}
 
 function init() {
     // Three.js setup
@@ -137,7 +139,9 @@ function allyinterval() {
             x += 0.2;
         } else {
             clearInterval(allyinter) //Finir les lancer des dès
+
             //Ally Commencer a dire qui il va attaquer et les attaquer.
+            affichageInfo("Veuillez choisir le dès de chaque character !")
         }
         bl++;
     }, 1000);
@@ -195,7 +199,7 @@ function choicingennemy() {
             let rande = rand(0, 5);
             let qui = character[rande];
             if (qui) {
-                document.getElementById(`titreennemy${i + 1}`).lastElementChild.style = `border: 2px dashed ${qui.color}`
+                document.getElementById(`titreennemy${i + 1}`).lastElementChild.style = `border: 5px dashed ${qui.color}`
                 document.getElementById(`titreennemy${i + 1}`).getElementsByTagName("b")[0].innerText = qui.name;
             }
         })
@@ -269,13 +273,6 @@ function createennemy() {
 
     });
 
-}
-
-
-// Permet de démarrer le combat de l'ennemy
-function startennemy(array) {
-    ennemynames.push(array);
-    ennemyinterval(ennemy.length);
 }
 
 // Permet de changer les nom d'un alliée et ses pv,il faut spécifier son nombre de 1 à 5;
@@ -376,7 +373,6 @@ function animate() {
     }
 
     // Check la collision entre cube1 et ennemycube1
-    // if (body1.checkContact(ennemymain[0].body)) {
     if (ennemymain != []) {
 
         let distance = cube1.position.distanceTo(ennemymain[0].cube.position);
@@ -389,7 +385,9 @@ function animate() {
             // Faites quelque chose en réponse à la collision ici.
             if (!notexecutebl) {
                 notexecutebl = true;
+                moveplayer = false;
                 console.log("Distance Ennnemy0", ennemymain)
+                startHud();
                 kill(ennemymain[0])
                 ennemyinterval();
             }
@@ -413,6 +411,16 @@ function kill(el) {
     const index = dice.indexOf(el);
     if (index !== -1) {
         dice.splice(index, 1);
+    }
+}
+
+function startHud() {
+    let ud = document.getElementById("hud")
+
+    if (ud.style.display == "none") {
+        ud.style.display = "block";
+    } else {
+        ud.style.display = "none";
     }
 }
 
@@ -505,20 +513,23 @@ function onMouseClick(event) {
 //Gestion de bouger le personnage principal "cube1" & "body1"
 document.addEventListener("keydown", (e) => {
     console.log(e.key)
-    switch (e.key) {
-        case "z":
-            body1.linearVelocity.set(0, 0, -5);
-            break;
-        case "s":
-            body1.linearVelocity.set(0, 0, 5);
-            break;
-        case "q":
-            body1.linearVelocity.set(-5, 0, 0);
-            break;
-        case "d":
-            body1.linearVelocity.set(5, 0, 0);
-            break;
+    if (moveplayer) {
+        switch (e.key) {
+            case "z":
+                body1.linearVelocity.set(0, 0, -5);
+                break;
+            case "s":
+                body1.linearVelocity.set(0, 0, 5);
+                break;
+            case "q":
+                body1.linearVelocity.set(-5, 0, 0);
+                break;
+            case "d":
+                body1.linearVelocity.set(5, 0, 0);
+                break;
+        }
     }
+
 });
 
 
