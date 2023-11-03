@@ -299,15 +299,21 @@ function createennemy() {
 }
 
 // Permet de changer les nom d'un alliée et ses pv,il faut spécifier son nombre de 1 à 5;
-function changeally(name, nb) {
-    let vpv = character[nb - 1].maxpv;
+function changeally(name, nb, pv) {
+    let vpv;
     let t = document.getElementById(`titreclasse${nb}`);
-
+    if (pv) {
+        vpv = pv;
+        character[nb - 1].pv = pv;
+    } else {
+        vpv = character[nb - 1].maxpv;
+        t.lastElementChild.firstElementChild.setAttribute("aria-valuemax", vpv)    // Max pv progress bar
+    }
+    console.log(`Les pv dans la func ${pv}\nVar vpv = ${vpv}\nValeur max pv${character[nb - 1].maxpv}\nL'index du truc est : ${nb}`)
     // Set les valeur de la barre de progression
     t.lastElementChild.firstElementChild.setAttribute("aria-valuenow", vpv)
-    t.lastElementChild.firstElementChild.setAttribute("aria-valuemax", vpv)
 
-    t.lastElementChild.firstElementChild.lastElementChild.innerText = `${vpv}/${vpv}`
+    t.lastElementChild.firstElementChild.lastElementChild.innerText = `${vpv}/${character[nb - 1].maxpv}`
     // t.lastElementChild.firstElementChild.lastElementChild.style = `width: 100%`;
 
     // Changer le nom
@@ -565,15 +571,15 @@ function onMouseClick(event) {
 }
 
 // Qui il tape et combien de dégat il fait !
-//Reste plus qu'a trouvée ou je stocke cela
 function startEnnemyFight() {
-    console.log("Ennemy", ennemy);
-    console.log("Character", character);
+    // console.log("Ennemy", ennemy);
+    // console.log("Character", character);
 
     ennemy.forEach((el, i) => {
         if (el.choiceface == "atk") {
-            let name = character.find(d => d.name == el.fight);
-            affichageInfo(`L'ennemy va maintenant attaquer ${name}`)
+            let ch = character.find(d => d.name == el.fight);
+            affichageInfo(`L'ennemy va maintenant attaquer`)
+            changeally("", ch.index, (ch.pv - el.dmg)) //
         }
     })
 
