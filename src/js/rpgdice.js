@@ -12,23 +12,23 @@ const timeDice = 750;
 var character = [ // Les personnage
     {
         index: 1, name: "Voleur", pv: 4, maxpv: 4, color: "orange",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
     },
     {
         index: 2, name: "Gardien", pv: 7, maxpv: 7, color: "gray",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
     },
     {
         index: 3, name: "Combattant", pv: 5, maxpv: 5, color: "green",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
     },
     {
         index: 4, name: "Healer", pv: 5, maxpv: 5, color: "red",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
     },
     {
         index: 5, name: "Mage", pv: 4, maxpv: 4, color: "blue",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
     }
 ];
 
@@ -51,7 +51,8 @@ async function updateGravity(x, y, z) {
 }
 
 function affichageInfo(string) {
-    alert(string)
+    // alert(string)
+    document.getElementById("h4info").innerText = string;
 }
 
 function init() {
@@ -151,7 +152,7 @@ function allyinterval() {
     console.log(dice + "; Création de dès alliés !")
     let x = 0
     let bl = 0
-    allyinter = setInterval(() => {
+    allyinter = setInterval(async () => {
         if (dice.length < 5) {
             createdice(true, bl, x, 5, 0);
             x += 0.2;
@@ -160,10 +161,12 @@ function allyinterval() {
 
             //Ally Commencer a dire qui il va attaquer et les attaquer.
             affichageInfo("Veuillez choisir le dès de chaque character !")
+            await choicingally();
         }
         bl++;
     }, timeDice);
 }
+
 
 var ennemyinter;
 
@@ -175,6 +178,7 @@ function ennemyinterval() {
         } else {
             clearInterval(ennemyinter) //Finir les lancer des dès
 
+            affichageInfo("Choix des ennemy")
             //Ennemy Commencer a dire qui il va attaquer et les attaquer.
             await choicingennemy(); //Lancer le choix
             //Lancer l'alliée !
@@ -224,7 +228,32 @@ function choicingennemy() {
             if (i == ennemy.length - 1) {
                 setTimeout(function () {
                     resolve();
-                }, 500)
+                }, 1000)
+            }
+        })
+
+    })
+
+};
+
+function choicingally() {
+    //Les ennemy choissie quel il vont taper 
+    return new Promise((resolve) => {
+
+        character.forEach((el, i) => {
+            let qui = character[rand(0, 5)];
+            if (qui) {
+                el.fight = qui.name;
+                document.getElementById(`titreclasse1${i + 1}`).lastElementChild.style = `border: 5px dashed ${qui.color}`
+
+                let fac = el.face[rand(0, 5)]
+                document.getElementById(`titreclasse1${i + 1}`).getElementsByClassName("card-text")[0].innerHTML = `${fac} -> <b>${qui.name} = ${el.dmg}</b> `;
+                el.choiceface = fac;
+            }
+            if (i == ennemy.length - 1) {
+                setTimeout(function () {
+                    resolve();
+                }, 1000)
             }
         })
 
@@ -252,6 +281,32 @@ function createcharacter() {
     });
 }
 
+// Permet de changer les nom d'un alliée et ses pv,il faut spécifier son nombre de 1 à 5;(sert lorsque on fight !)
+function changeally(name, nb, pv) {
+    let vpv;
+    let t = document.getElementById(`titreclasse${nb}`);
+    let maxpv = character[nb - 1].maxpv;
+    if (pv) {
+        vpv = pv;
+        character[nb - 1].pv = pv;
+    } else {
+        vpv = character[nb - 1].maxpv;
+        t.lastElementChild.firstElementChild.setAttribute("aria-valuemax", vpv)    // Max pv progress bar
+    }
+    
+    console.log(`[AllyChange] Les pv dans la func ${pv}\nVar vpv = ${vpv}\nValeur max pv${maxpv}\nL'index du truc est : ${nb}`)
+    // Set les valeur de la barre de progression
+    t.lastElementChild.firstElementChild.setAttribute("aria-valuenow", vpv)
+
+    t.lastElementChild.firstElementChild.lastElementChild.innerText = `${vpv}/${maxpv}`
+    t.lastElementChild.firstElementChild.lastElementChild.style = `width: ${(vpv / maxpv) * 100}%`;
+
+    // Changer le nom
+    if (name != "") {
+        t.firstElementChild.innerText = name;
+    }
+
+}
 
 function createennemy() {
     return new Promise((resolve) => {
@@ -298,28 +353,24 @@ function createennemy() {
 
 }
 
-// Permet de changer les nom d'un alliée et ses pv,il faut spécifier son nombre de 1 à 5;
-function changeally(name, nb, pv) {
+//Permet de changer les ennemy(donc quand c'est le tour du joueurs)
+function changeEnnemy(nb, pv) {
     let vpv;
-    let t = document.getElementById(`titreclasse${nb}`);
+    let t = document.getElementById(`titreennemy${nb}`);
+    let maxpv = ennemy[nb - 1].maxpv;
     if (pv) {
         vpv = pv;
-        character[nb - 1].pv = pv;
+        ennemy[nb - 1].pv = pv;
     } else {
-        vpv = character[nb - 1].maxpv;
+        vpv = ennemy[nb - 1].maxpv;
         t.lastElementChild.firstElementChild.setAttribute("aria-valuemax", vpv)    // Max pv progress bar
     }
-    console.log(`Les pv dans la func ${pv}\nVar vpv = ${vpv}\nValeur max pv${character[nb - 1].maxpv}\nL'index du truc est : ${nb}`)
+    console.log(`[EnnemyChange] Les pv dans la func ${pv}\nVar vpv = ${vpv}\nValeur max pv${maxpv}\nL'index du truc est : ${nb}`)
     // Set les valeur de la barre de progression
     t.lastElementChild.firstElementChild.setAttribute("aria-valuenow", vpv)
 
-    t.lastElementChild.firstElementChild.lastElementChild.innerText = `${vpv}/${character[nb - 1].maxpv}`
-    // t.lastElementChild.firstElementChild.lastElementChild.style = `width: 100%`;
-
-    // Changer le nom
-    if (name != "") {
-        t.firstElementChild.innerText = name;
-    }
+    t.lastElementChild.firstElementChild.lastElementChild.innerText = `${vpv}/${maxpv}`
+    t.lastElementChild.firstElementChild.lastElementChild.style = `width: ${(vpv / maxpv) * 100}%`;
 
 }
 
@@ -557,9 +608,9 @@ function onMouseClick(event) {
 
                 }
 
-                if (clikdice == 5) {
-                    affichageInfo("Start du combat ! -> Ennemy");
-                    startEnnemyFight()
+                if (clikdice == dice.length) {
+                    affichageInfo("Les ennemy attaque en premier !");
+                    document.getElementById("btninfotop").style.display = "block";
                 }
 
             }
@@ -570,21 +621,41 @@ function onMouseClick(event) {
 
 }
 
+
 // Qui il tape et combien de dégat il fait !
 function startEnnemyFight() {
+    clikdice = 0; //Reset du nombre de truc cliqued
+    console.log("[ENNEMY] Démarrage du fight !")
     // console.log("Ennemy", ennemy);
     // console.log("Character", character);
+    affichageInfo(`Les ennemy va maintenant attaquer`)
 
     ennemy.forEach((el, i) => {
         if (el.choiceface == "atk") {
             let ch = character.find(d => d.name == el.fight);
-            affichageInfo(`L'ennemy va maintenant attaquer`)
             changeally("", ch.index, (ch.pv - el.dmg)) //
         }
     })
 
 
 }
+
+function startAllyFight() {
+    console.log("[ALLY] Démarrage du fight !")
+    // console.log("Ennemy", ennemy);
+    // console.log("Character", character);
+    affichageInfo(`Les alliès va maintenant attaquer`)
+
+    character.forEach((el, i) => {
+        if (el.choiceface == "atk") {
+            let ch = ennemy.find(d => d.name == el.fight);
+            changeEnnemy(1, (ch.pv - el.dmg))
+        } else {
+            console.log("Il ne peut pas attaquer")
+        }
+    })
+}
+
 
 
 //Gestion de bouger le personnage principal "cube1" & "body1"
@@ -613,3 +684,28 @@ document.addEventListener("keydown", (e) => {
 
 
 
+window.onload = function () {
+    // Créez un élément de bouton HTML
+    const button = document.createElement("button");
+    button.innerHTML = "Start Fight";
+    button.id = "btninfotop"
+    button.style.display = "none"
+    button.style.top = "10px";
+    button.style.left = "10px";
+
+    // Ajoutez le bouton au DOM
+    document.getElementById("divinfotop").appendChild(button);
+
+    // Définissez une action pour le bouton lorsqu'il est cliqué
+    button.addEventListener("click", function () {
+        // Code à exécuter lorsque le bouton est cliqué, par exemple, pour démarrer le combat.
+        document.getElementById("btninfotop").style.display = "none"
+        startEnnemyFight();
+
+        setTimeout(function () {
+            affichageInfo("Le joueurs attaque maintenant !");
+            startAllyFight();
+        }, 2000)
+    });
+
+}
