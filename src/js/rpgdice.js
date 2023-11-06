@@ -12,29 +12,34 @@ const timeDice = 750;
 var character = [ // Les personnage
     {
         index: 1, name: "Voleur", pv: 4, maxpv: 4, color: "orange",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop",
+        whofight: ""
     },
     {
         index: 2, name: "Gardien", pv: 7, maxpv: 7, color: "gray",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop",
+        whofight: ""
     },
     {
         index: 3, name: "Combattant", pv: 5, maxpv: 5, color: "green",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop",
+        whofight: ""
     },
     {
         index: 4, name: "Healer", pv: 5, maxpv: 5, color: "red",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop",
+        whofight: ""
     },
     {
         index: 5, name: "Mage", pv: 4, maxpv: 4, color: "blue",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop"
+        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop",
+        whofight: ""
     }
 ];
 
 //atk ou nop
-var ennemynames = [{ name: "Nullos", face: ["atk", "atk", "atk", "atk", "atk", "atk"], dmg: 2 },
-{ name: "PafLechien", face: ["atk", "atk", "atk", "atk", "atk", "atk"], dmg: 1 }];
+var ennemynames = [{ name: "Nullos", face: ["atk", "atk", "atk", "atk", "atk", "atk"], dmg: 2, color: "red" },
+{ name: "PafLechien", face: ["atk", "atk", "atk", "atk", "atk", "atk"], dmg: 1, color: "blue" }];
 
 // Geometry (couleur du cube) des ennemy
 const ennemyGeometry = new THREE.BoxGeometry(1, 2, 1);
@@ -161,7 +166,7 @@ function allyinterval() {
 
             //Ally Commencer a dire qui il va attaquer et les attaquer.
             affichageInfo("Veuillez choisir le dès de chaque character !")
-            await choicingally();
+            // await choicingally();
         }
         bl++;
     }, timeDice);
@@ -236,30 +241,6 @@ function choicingennemy() {
 
 };
 
-function choicingally() {
-    //Les ennemy choissie quel il vont taper 
-    return new Promise((resolve) => {
-
-        character.forEach((el, i) => {
-            let qui = character[rand(0, 5)];
-            if (qui) {
-                el.fight = qui.name;
-                document.getElementById(`titreclasse1${i + 1}`).lastElementChild.style = `border: 5px dashed ${qui.color}`
-
-                let fac = el.face[rand(0, 5)]
-                document.getElementById(`titreclasse1${i + 1}`).getElementsByClassName("card-text")[0].innerHTML = `${fac} -> <b>${qui.name} = ${el.dmg}</b> `;
-                el.choiceface = fac;
-            }
-            if (i == ennemy.length - 1) {
-                setTimeout(function () {
-                    resolve();
-                }, 1000)
-            }
-        })
-
-    })
-
-};
 
 function createcharacter() {
     return new Promise((resolve) => {
@@ -293,7 +274,7 @@ function changeally(name, nb, pv) {
         vpv = character[nb - 1].maxpv;
         t.lastElementChild.firstElementChild.setAttribute("aria-valuemax", vpv)    // Max pv progress bar
     }
-    
+
     console.log(`[AllyChange] Les pv dans la func ${pv}\nVar vpv = ${vpv}\nValeur max pv${maxpv}\nL'index du truc est : ${nb}`)
     // Set les valeur de la barre de progression
     t.lastElementChild.firstElementChild.setAttribute("aria-valuenow", vpv)
@@ -328,14 +309,17 @@ function createennemy() {
         let bl = 1;
         while (bl < nbennemy + 1) {
             let randen = ennemynames[rand(0, ennemynames.length - 1)];
-            ennemy.push({ name: randen.name, pv: vpv, maxpv: vpv, dmg: randen.dmg, fight: "?", face: randen.face, choiceface: "nop" })
+            ennemy.push({
+                name: randen.name, pv: vpv, maxpv: vpv, dmg: randen.dmg, fight: "?", face: randen.face, choiceface: "nop",
+                color: randen.color
+            })
             document.getElementById("ennemydiv").innerHTML += `<div class="col ms-auto">
         <div id="titreennemy${bl}" class="card wd-50 rounded-0" style="width: 15%">
             <h5 class="card-header">${randen.name}</h5>
             <div class="card-body">
                 <div class="progress" role="progressbar" aria-valuenow="${vpv}"
                     aria-valuemin="0" aria-valuemax="${vpv}">
-                    <div class="progress-bar bg-red" style="width: 100%">${vpv}/${vpv}</div>
+                    <div class="progress-bar bg-${randen.color}" style="width: 100%">${vpv}/${vpv}</div>
                 </div>
                 <p class="card-text">??</p>
             </div>
@@ -510,8 +494,8 @@ async function initstart() {
 
     onWindowResize(); //Resize du jeu
 
-    createcharacter(); // Création des personnage hud && dans le array
-    createennemy(); // Création ennemy
+    await createcharacter(); // Création des personnage hud && dans le array
+    await createennemy(); // Création ennemy
 
     init(); // Initialisiation du jeu
     createMainEnnemy(-10, -4, 0)
@@ -564,9 +548,9 @@ function findCharacter(name) {
 
 function addDiceAlly(item) {
     let dice = item[0]
-
-    document.getElementById(`titreclasse${item[1].index}`).lastElementChild.lastElementChild.innerText = `${dice.face[dice.facerand]}`;
-
+    let quoi = dice.face[dice.facerand];
+    document.getElementById(`titreclasse${item[1].index}`).lastElementChild.lastElementChild.innerText = `${quoi}`;
+    item[1].choiceface = quoi;
 
 }
 
@@ -604,13 +588,14 @@ function onMouseClick(event) {
                     clikdice++;
                     diceItem.clicked = true;
 
-                    addDiceAlly([diceItem, findCharacter(diceItem.name)]);
+                    addDiceAlly([diceItem, findCharacter(diceItem.name)]); // On lui passe le cube[0] et le personnage[1]
 
                 }
 
                 if (clikdice == dice.length) {
-                    affichageInfo("Les ennemy attaque en premier !");
-                    document.getElementById("btninfotop").style.display = "block";
+                    affichageInfo("Les ennemy attaque en premier !"); // On dit au joueurs
+
+                    createBtnAtk() //Création des button pour attaquer
                 }
 
             }
@@ -618,6 +603,48 @@ function onMouseClick(event) {
     } catch (e) {
         console.warn(e)
     }
+
+}
+
+function choicingAlly(ch, el) {
+    if (ch.whofight != "") {
+        ch.whofight = el.name;
+        document.getElementById(`titreclasse${ch.index}`).lastElementChild.style = `border: 5px dashed ${el.color}`
+
+        document.getElementById(`titreclasse${ch.index}`).getElementsByClassName("card-text")[0].innerHTML = `${ch.choiceface} -> <b>${el.name} = ${el.dmg}</b> `;
+        choiceennemyforally--;
+    }
+
+    if (choiceennemyforally == 0) { //Vérification que on cliquer sur tout les button de choix des attaque
+        document.getElementById("btninfotop").style.display = "block"; // Btn t'attaque que on affiche
+    }
+
+}
+var choiceennemyforally = 0;
+
+function createBtnAtk() {
+    character.forEach((ch, ic) => {
+
+        ennemy.forEach((el, i) => {
+            if (ch.choiceface != "nop") {
+                choiceennemyforally++;
+
+                let tcb = document.getElementById(`titreclasse${ic + 1}`).getElementsByClassName("card-btn")[0];
+                let btn = document.createElement("button")
+                btn.innerText = el.name;
+                btn.addEventListener("click", function () {
+                    console.log(`Vous avez choisi ${el.name} Ton personnage fait ${ch.dmg} de dégat`)
+                    // changeEnnemy(i + 1, (el.pv - ch.dmg))
+                    choicingAlly(ch, el);
+                });
+
+                tcb.appendChild(btn);
+
+            }
+
+        })
+
+    })
 
 }
 
@@ -640,21 +667,6 @@ function startEnnemyFight() {
 
 }
 
-function startAllyFight() {
-    console.log("[ALLY] Démarrage du fight !")
-    // console.log("Ennemy", ennemy);
-    // console.log("Character", character);
-    affichageInfo(`Les alliès va maintenant attaquer`)
-
-    character.forEach((el, i) => {
-        if (el.choiceface == "atk") {
-            let ch = ennemy.find(d => d.name == el.fight);
-            changeEnnemy(1, (ch.pv - el.dmg))
-        } else {
-            console.log("Il ne peut pas attaquer")
-        }
-    })
-}
 
 
 
@@ -702,10 +714,6 @@ window.onload = function () {
         document.getElementById("btninfotop").style.display = "none"
         startEnnemyFight();
 
-        setTimeout(function () {
-            affichageInfo("Le joueurs attaque maintenant !");
-            startAllyFight();
-        }, 2000)
     });
 
 }
