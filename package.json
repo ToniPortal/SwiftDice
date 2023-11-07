@@ -13,6 +13,7 @@
   "author": "ToniPortal",
   "license": "MIT",
   "dependencies": {
+    "compression": "^1.7.4",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
     "path": "^0.12.7",

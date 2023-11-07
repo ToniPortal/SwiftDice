@@ -8,11 +8,12 @@ var scene, camera, renderer, // la camera et la scene
     ennemymain = [];
 
 const timeDice = 750;
+const timeTour = 1500;
 
 var character = [ // Les personnage
     {
         index: 1, name: "Voleur", pv: 4, maxpv: 4, color: "orange",
-        face: ["nop", "atk", "nop", "nop", "atk", "atk"], dmg: 1, choiceface: "nop",
+        face: ["atk", "atk", "atk", "atk", "atk", "atk"], dmg: 999, choiceface: "nop",
         whofight: ""
     },
     {
@@ -154,6 +155,7 @@ function createdice(allye, bl, x, y, z) {
 var allyinter;
 
 function allyinterval() {
+    affichageInfo("Lancée dès Alliès !")
     console.log(dice + "; Création de dès alliés !")
     let x = 0
     let bl = 0
@@ -166,7 +168,6 @@ function allyinterval() {
 
             //Ally Commencer a dire qui il va attaquer et les attaquer.
             affichageInfo("Veuillez choisir le dès de chaque character !")
-            // await choicingally();
         }
         bl++;
     }, timeDice);
@@ -176,6 +177,7 @@ function allyinterval() {
 var ennemyinter;
 
 function ennemyinterval() {
+    affichageInfo("Lancée dès ennemy !")
     let bl = 0;
     ennemyinter = setInterval(async () => {
         if (dice.length < ennemy.length) {
@@ -187,17 +189,28 @@ function ennemyinterval() {
             //Ennemy Commencer a dire qui il va attaquer et les attaquer.
             await choicingennemy(); //Lancer le choix
             //Lancer l'alliée !
-            setTimeout(function () {
-                dice.forEach((di) => {
-                    kill(di) //Kill et delete l'array des dès
-                })
+            setTimeout(async function () {
+                await killAllDice();
                 setTimeout(async function () {
                     allyinterval()
                 }, 250)
-            }, 1500)
+            }, timeTour)
         }
         bl++;
     }, timeDice);
+}
+
+function killAllDice() {
+    return new Promise((resolve) => {
+
+        dice.forEach((di, i) => {
+            kill(di) //Kill et delete l'array des dès
+            if (i == dice.length - 1) {
+                dice = [];
+                resolve();
+            }
+        })
+    })
 }
 
 function createMainEnnemy(x, y, z) {
@@ -217,29 +230,24 @@ function createMainEnnemy(x, y, z) {
 
 
 function choicingennemy() {
-    //Les ennemy choissie quel il vont taper 
-    return new Promise((resolve) => {
+    const promises = ennemy.map((el, i) => {
+        return new Promise((resolve) => {
+            let qui = character[rand(0, character.length - 1)];
+            el.fight = qui.name;
+            document.getElementById(`titreennemy${i}`).lastElementChild.style = `border: 5px dashed ${qui.color}`
 
-        ennemy.forEach((el, i) => {
-            let qui = character[rand(0, 5)];
-            if (qui) {
-                el.fight = qui.name;
-                document.getElementById(`titreennemy${i + 1}`).lastElementChild.style = `border: 5px dashed ${qui.color}`
+            let fac = el.face[rand(0, 5)]
+            document.getElementById(`titreennemy${i}`).getElementsByClassName("card-text")[0].innerHTML = `${fac} -> <b>${qui.name} = ${el.dmg}</b>`;
+            el.choiceface = fac;
 
-                let fac = el.face[rand(0, 5)]
-                document.getElementById(`titreennemy${i + 1}`).getElementsByClassName("card-text")[0].innerHTML = `${fac} -> <b>${qui.name} = ${el.dmg}</b> `;
-                el.choiceface = fac;
-            }
-            if (i == ennemy.length - 1) {
-                setTimeout(function () {
-                    resolve();
-                }, 1000)
-            }
-        })
+            resolve();
+        });
+    });
 
-    })
+    return Promise.all(promises);
+}
 
-};
+
 
 
 function createcharacter() {
@@ -262,6 +270,7 @@ function createcharacter() {
     });
 }
 
+
 // Permet de changer les nom d'un alliée et ses pv,il faut spécifier son nombre de 1 à 5;(sert lorsque on fight !)
 function changeally(name, nb, pv) {
     let vpv;
@@ -274,8 +283,14 @@ function changeally(name, nb, pv) {
         vpv = character[nb - 1].maxpv;
         t.lastElementChild.firstElementChild.setAttribute("aria-valuemax", vpv)    // Max pv progress bar
     }
-
     console.log(`[AllyChange] Les pv dans la func ${pv}\nVar vpv = ${vpv}\nValeur max pv${maxpv}\nL'index du truc est : ${nb}`)
+
+    if (vpv <= 0) {
+        alert(character[nb - 1].name + " est mort !");
+        character.splice(nb - 1, 1);
+
+        vpv = 0;
+    }
     // Set les valeur de la barre de progression
     t.lastElementChild.firstElementChild.setAttribute("aria-valuenow", vpv)
 
@@ -286,6 +301,9 @@ function changeally(name, nb, pv) {
     if (name != "") {
         t.firstElementChild.innerText = name;
     }
+
+
+
 
 }
 
@@ -306,8 +324,8 @@ function createennemy() {
         }
 
 
-        let bl = 1;
-        while (bl < nbennemy + 1) {
+        let bl = 0;
+        while (bl < nbennemy) {
             let randen = ennemynames[rand(0, ennemynames.length - 1)];
             ennemy.push({
                 name: randen.name, pv: vpv, maxpv: vpv, dmg: randen.dmg, fight: "?", face: randen.face, choiceface: "nop",
@@ -326,7 +344,7 @@ function createennemy() {
         </div>
         </div>`
 
-            if (bl == nbennemy) {
+            if (bl == nbennemy - 1) {
                 resolve()
             }
 
@@ -341,21 +359,54 @@ function createennemy() {
 function changeEnnemy(nb, pv) {
     let vpv;
     let t = document.getElementById(`titreennemy${nb}`);
-    let maxpv = ennemy[nb - 1].maxpv;
+    console.log(`Array Ennemy n°${nb}?`, ennemy)
+    let maxpv = ennemy[nb].maxpv;
     if (pv) {
         vpv = pv;
-        ennemy[nb - 1].pv = pv;
+        ennemy[nb].pv = pv;
     } else {
-        vpv = ennemy[nb - 1].maxpv;
+        vpv = ennemy[nb].maxpv;
         t.lastElementChild.firstElementChild.setAttribute("aria-valuemax", vpv)    // Max pv progress bar
     }
     console.log(`[EnnemyChange] Les pv dans la func ${pv}\nVar vpv = ${vpv}\nValeur max pv${maxpv}\nL'index du truc est : ${nb}`)
+
+    if (vpv <= 0) {
+        alert(ennemy[nb].name + " est mort !")
+        ennemy.splice(nb, 1);
+
+        vpv = 0; //Remettre a 0
+    }
     // Set les valeur de la barre de progression
     t.lastElementChild.firstElementChild.setAttribute("aria-valuenow", vpv)
 
     t.lastElementChild.firstElementChild.lastElementChild.innerText = `${vpv}/${maxpv}`
     t.lastElementChild.firstElementChild.lastElementChild.style = `width: ${(vpv / maxpv) * 100}%`;
 
+
+}
+
+function deathEnnemy() {
+    if (deathone == false) {
+        deathone = true;
+        moveplayer = true;
+        killAllDice();
+
+        document.getElementById("ennemydiv").innerHTML = "";
+        document.getElementById("hud").style.display = "none";
+
+        alert("Vous avez tuée tout les ennemy gg !")
+    }
+    //Remettre les pv a 0 lors de la fin du combat ?
+}
+
+var deathone = false;
+
+function death(string) {
+    if (deathone == false) {
+        deathone = true;
+        alert(string)
+        window.location.reload();
+    }
 }
 
 function rand(min, max) {
@@ -377,14 +428,18 @@ function animate() {
     // Si on tombe avec le joueurs
     if ((body1).getPosition().y < -5) {
         body1.position.set(0, -4, 0);
-        alert("Vous êtes mort !")
-        window.location.reload();
+        death("Votre personnage est tombée");
     }
 
 
     // Update le player 1(cube1)
     cube1.position.copy(body1.getPosition());
     cube1.quaternion.copy(body1.getQuaternion());
+
+    if (ennemymain[0]) {
+        ennemymain[0].cube.position.copy(ennemymain[0].body.getPosition());
+        ennemymain[0].cube.quaternion.copy(ennemymain[0].body.getQuaternion());
+    }
 
     // Lancer uniquement si la taille de l'array des dès est pas a 0
     if (dice.length !== 0) {
@@ -437,7 +492,7 @@ function animate() {
     }
 
     // Check la collision entre cube1 et ennemycube1
-    if (ennemymain != []) {
+    if (ennemymain != [] && ennemymain[0]) {
 
         let distance = cube1.position.distanceTo(ennemymain[0].cube.position);
 
@@ -449,10 +504,11 @@ function animate() {
             // Faites quelque chose en réponse à la collision ici.
             if (!notexecutebl) {
                 notexecutebl = true;
-                moveplayer = false;
+                // moveplayer = false;
                 console.log("Distance Ennnemy0", ennemymain)
                 startHud();
                 kill(ennemymain[0])
+                ennemymain.splice(0, 1);
                 ennemyinterval();
             }
 
@@ -467,15 +523,25 @@ function animate() {
 
 // Pour kill un object
 function kill(el) {
-    world.remove(el.body); // Remove the Oimo.js body
-    scene.remove(el.cube); // Remove the Three.js cube
-    el.cube.geometry.dispose(); // Dispose of the geometry
-    el.cube.material.dispose(); // Dispose of the material
+    return new Promise((resolve) => {
+        try {
+            // Supprimez le cube Three.js
+            scene.remove(el.cube);
+            el.cube.geometry.dispose();
+            el.cube.material.dispose();
 
-    const index = dice.indexOf(el);
-    if (index !== -1) {
-        dice.splice(index, 1);
-    }
+            // Supprimez le corps physique Oimo.js
+            world.removeRigidBody(el.body);
+            if (!scene.getObjectById(el.cube.id)) {
+                resolve()
+            } else {
+                kill(el)
+            }
+
+        } catch (e) {
+            console.warn(e)
+        }
+    })
 }
 
 function startHud() {
@@ -557,7 +623,7 @@ function addDiceAlly(item) {
 var clikdice = 0;
 
 //Détecter le click sur un dès pour
-function onMouseClick(event) {
+async function onMouseClick(event) {
     try {
         // Récupérez les coordonnées du clic par rapport à la fenêtre
         const mouse = new THREE.Vector2();
@@ -595,6 +661,7 @@ function onMouseClick(event) {
                 if (clikdice == dice.length) {
                     affichageInfo("Les ennemy attaque en premier !"); // On dit au joueurs
 
+                    await killAllDice(); // Désaficher tout dès !
                     createBtnAtk() //Création des button pour attaquer
                 }
 
@@ -607,24 +674,46 @@ function onMouseClick(event) {
 }
 
 function choicingAlly(ch, el) {
-    if (ch.whofight != "") {
-        ch.whofight = el.name;
-        document.getElementById(`titreclasse${ch.index}`).lastElementChild.style = `border: 5px dashed ${el.color}`
+    return new Promise((resolve) => {
 
-        document.getElementById(`titreclasse${ch.index}`).getElementsByClassName("card-text")[0].innerHTML = `${ch.choiceface} -> <b>${el.name} = ${el.dmg}</b> `;
-        choiceennemyforally--;
-    }
+        console.log(`Vous avez choisi ${el.name} Ton personnage fait ${ch.dmg} de dégat\nValeur ? ${choiceennemyforally}`)
+        if (ch.whofight == "") {
+            choiceennemyforally--;
 
-    if (choiceennemyforally == 0) { //Vérification que on cliquer sur tout les button de choix des attaque
-        document.getElementById("btninfotop").style.display = "block"; // Btn t'attaque que on affiche
+            ch.whofight = el.name;
+            document.getElementById(`titreclasse${ch.index}`).lastElementChild.style = `border: 5px dashed ${el.color}`
+
+            document.getElementById(`titreclasse${ch.index}`).getElementsByClassName("card-text")[0].innerHTML = `${ch.choiceface} -> <b>${el.name} = ${ch.dmg}</b> `;
+        }
+
+
+        resolve();
+    });
+
+}
+
+function btnfight(bool) {
+    let b = document.getElementById("btninfotop").style;
+    if (b.display == "none") {
+        b.display = "block"; // Btn t'attaque que on affiche
+    } else {
+        b.display = "none"; // Btn t'attaque que on affiche
     }
 
 }
+
+function delBtnAtk() {
+    let at = document.getElementsByClassName("atkally");
+    for (let i = at.length - 1; i >= 0; i--) {
+        at[i].remove();
+    }
+
+}
+
 var choiceennemyforally = 0;
 
 function createBtnAtk() {
     character.forEach((ch, ic) => {
-
         ennemy.forEach((el, i) => {
             if (ch.choiceface != "nop") {
                 choiceennemyforally++;
@@ -632,21 +721,23 @@ function createBtnAtk() {
                 let tcb = document.getElementById(`titreclasse${ic + 1}`).getElementsByClassName("card-btn")[0];
                 let btn = document.createElement("button")
                 btn.innerText = el.name;
-                btn.addEventListener("click", function () {
-                    console.log(`Vous avez choisi ${el.name} Ton personnage fait ${ch.dmg} de dégat`)
-                    // changeEnnemy(i + 1, (el.pv - ch.dmg))
-                    choicingAlly(ch, el);
-                });
+                btn.classList.add("atkally")
 
+                let onButtonClick = async function () {
+                    await choicingAlly(ch, el);
+
+                    if (choiceennemyforally === 0) {
+                        btnfight();
+                    }
+                };
+
+                btn.addEventListener("click", onButtonClick);
                 tcb.appendChild(btn);
-
             }
-
-        })
-
-    })
-
+        });
+    });
 }
+
 
 
 // Qui il tape et combien de dégat il fait !
@@ -658,11 +749,61 @@ function startEnnemyFight() {
     affichageInfo(`Les ennemy va maintenant attaquer`)
 
     ennemy.forEach((el, i) => {
-        if (el.choiceface == "atk") {
+        if (el.choiceface != "nop") {
+            //Remove le visuel pour qui tape l'ennemy
+            document.getElementById(`titreennemy${i}`).lastElementChild.style = `border: none` //Enlever la bordure lorsque il fight
+            document.getElementById(`titreennemy${i}`).getElementsByClassName("card-text")[0].innerText = "?";
+
             let ch = character.find(d => d.name == el.fight);
-            changeally("", ch.index, (ch.pv - el.dmg)) //
+            changeally("", ch.index, (ch.pv - el.dmg))
         }
     })
+    setTimeout(function () {
+
+        //Vérification de si il sont pas mort tous !
+        if (character.length == 0) {
+            death();
+        }
+
+        startAllyFight();
+
+    }, timeTour)
+
+}
+
+// Qui il tape et combien de dégat il fait !
+function startAllyFight() {
+    clikdice = 0; //Reset du nombre de truc cliqued
+    console.log("[ALLY] Démarrage du fight !")
+    affichageInfo(`Les alliées va maintenant attaquer`)
+
+    character.forEach(async (ch, i) => {
+        let tc = document.getElementById(`titreclasse${ch.index}`); // Get element by id avec l'index du character
+
+        tc.getElementsByClassName("card-text")[0].innerText = "?"; // Remove le texte écrit
+
+        if (ch.choiceface != "nop" && ennemy.length != 0) { // Fait si il a un ennemy et que il n'est pas tombée sur la face nop
+            tc.lastElementChild.style = `border: none` //Remove la border
+
+            let el = ennemy.find(d => d.name == ch.whofight);
+            await changeEnnemy(ennemy.indexOf(el), (el.pv - ch.dmg))
+            ch.whofight = "";
+
+        }
+    })
+
+    setTimeout(function () {
+        if (ennemy.length == 0) {
+            affichageInfo("Fin du fight !");
+            deathEnnemy();
+        } else {
+            affichageInfo(`Prochain tour enclanchée !`)
+
+            ennemyinterval();
+        }
+
+
+    }, timeTour)
 
 
 }
@@ -673,7 +814,8 @@ function startEnnemyFight() {
 //Gestion de bouger le personnage principal "cube1" & "body1"
 document.addEventListener("keydown", (e) => {
     console.log(e.key)
-    if (moveplayer) {
+
+    if (moveplayer) { // Variable qui dit oui ou nom l'utulisateur peut bouger.
         switch (e.key) {
             case "z":
                 body1.linearVelocity.set(0, 0, -5);
@@ -687,7 +829,24 @@ document.addEventListener("keydown", (e) => {
             case "d":
                 body1.linearVelocity.set(5, 0, 0);
                 break;
+
         }
+    }
+
+    //La camera :
+    switch (e.key) {
+        case "ArrowLeft":
+            camera.position.x -= 1;
+            break;
+        case "ArrowRight":
+            camera.position.x += 1;
+            break;
+        case "ArrowDown":
+            camera.position.z += 1;
+            break;
+        case "ArrowUp":
+            camera.position.z -= 1;
+            break;
     }
 
 });
@@ -711,7 +870,8 @@ window.onload = function () {
     // Définissez une action pour le bouton lorsqu'il est cliqué
     button.addEventListener("click", function () {
         // Code à exécuter lorsque le bouton est cliqué, par exemple, pour démarrer le combat.
-        document.getElementById("btninfotop").style.display = "none"
+        btnfight();
+        delBtnAtk();
         startEnnemyFight();
 
     });

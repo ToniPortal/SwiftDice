@@ -6,6 +6,7 @@ const express = require('express'),
     ip = (process.env.IP || process.env.ALWAYSDATA_HTTPD_IP, config.ip);
 
 
+const compression = require('compression');
 
 app = express();
 
@@ -13,6 +14,9 @@ app.set('view engine', 'ejs');
 
 app.use('/src', express.static(path.join(__dirname, 'src')));
 app.use('/th', express.static(path.join(__dirname, '/node_modules/three/build')));
+
+app.use(compression());
+
 
 const server = app.listen(port, ip, err => {
     err ?
