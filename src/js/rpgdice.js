@@ -13,7 +13,7 @@ const timeTour = 1500;
 var character = [ // Les personnage
     {
         index: 1, name: "Voleur", pv: 4, maxpv: 4, color: "orange",
-        face: ["atk", "atk", "atk", "atk", "atk", "atk"], dmg: 999, choiceface: "nop",
+        face: ["atk", "atk", "atk", "atk", "atk", "atk"], dmg: 1, choiceface: "nop",
         whofight: ""
     },
     {
@@ -60,6 +60,8 @@ function affichageInfo(string) {
     // alert(string)
     document.getElementById("h4info").innerText = string;
 }
+
+const lookat = new THREE.Vector3(0, 2, 0);
 
 function init() {
     // Three.js setup
@@ -117,7 +119,7 @@ function init() {
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(20, 20, 40);
     cube1.add(camera);
-    camera.lookAt(new THREE.Vector3(0, 2, 0));
+    camera.lookAt(lookat);
 
 
     //Ajout du joueurs a la scene :
@@ -126,7 +128,6 @@ function init() {
 } //Fin init
 
 const diceGeometry = new THREE.BoxGeometry(1, 1, 1);
-const diceMaterial = new THREE.MeshBasicMaterial({ color: 0xF02003 });
 
 function createdice(allye, bl, x, y, z) {
     console.log("Création de dès")
@@ -140,8 +141,9 @@ function createdice(allye, bl, x, y, z) {
         move: true
     });
 
-    // Create cube 2 mesh
-    let cube2 = new THREE.Mesh(diceGeometry, diceMaterial);
+    let diceMaterial = new THREE.MeshBasicMaterial({ color: `${character[bl].color}` });
+
+    let cube2 = new THREE.Mesh(diceGeometry, diceMaterial);    // Create cube 2 mesh
     cube2.position.set(position2[0], position2[1], position2[2]);
     scene.add(cube2);
 
@@ -620,10 +622,16 @@ function addDiceAlly(item) {
 }
 
 var clikdice = 0;
+var anciennecam = [];
 
 //Détecter le click sur un dès pour
 async function onMouseClick(event) {
     try {
+        if(anciennecam && anciennecam != []){
+            resetCam()
+        }
+        anciennecam = camera.position.clone();
+
         // Récupérez les coordonnées du clic par rapport à la fenêtre
         const mouse = new THREE.Vector2();
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -650,10 +658,19 @@ async function onMouseClick(event) {
                 if (!diceItem.clicked) {
                     console.log('Cube dormant cliqué !');
 
-                    clikdice++;
-                    diceItem.clicked = true;
+                    // clikdice++;
+                    // diceItem.clicked = true;
 
-                    addDiceAlly([diceItem, findCharacter(diceItem.name)]); // On lui passe le cube[0] et le personnage[1]
+                    // addDiceAlly([diceItem, findCharacter(diceItem.name)]); // On lui passe le cube[0] et le personnage[1]
+
+                    let dicePosition = diceItem.body.getPosition();
+                    let cameraHeight = 10; // Hauteur de la caméra par rapport au diceItem
+            
+                    // Définissez la position de la caméra au-dessus du diceItem
+                    camera.position.set(dicePosition.x, dicePosition.y + cameraHeight, dicePosition.z);
+            
+                    // Faites en sorte que la caméra regarde le point (0, 0, 0)
+                    camera.lookAt(dicePosition.x, dicePosition.y, dicePosition.z);
 
                 }
 
@@ -670,6 +687,14 @@ async function onMouseClick(event) {
         console.warn(e)
     }
 
+}
+
+function resetCam() {
+    if (anciennecam) {
+        camera.position.set(20, 20, 40);
+        // camera.position.copy(anciennecam);
+        camera.lookAt(lookat);
+    }
 }
 
 function choicingAlly(ch, el) {
@@ -845,6 +870,9 @@ document.addEventListener("keydown", (e) => {
             break;
         case "ArrowUp":
             camera.position.z -= 1;
+            break;
+        case "Escape":
+            resetCam()
             break;
     }
 
