@@ -504,7 +504,7 @@ function animate() {
             // Faites quelque chose en réponse à la collision ici.
             if (!notexecutebl) {
                 notexecutebl = true;
-                // moveplayer = false;
+                moveplayer = false;
                 console.log("Distance Ennnemy0", ennemymain)
                 startHud();
                 kill(ennemymain[0])
@@ -527,16 +527,15 @@ function kill(el) {
         try {
             // Supprimez le cube Three.js
             scene.remove(el.cube);
-            el.cube.geometry.dispose();
-            el.cube.material.dispose();
 
             // Supprimez le corps physique Oimo.js
             world.removeRigidBody(el.body);
-            if (!scene.getObjectById(el.cube.id)) {
-                resolve()
-            } else {
-                kill(el)
-            }
+            resolve()
+            // if (!scene.getObjectById(el.cube.id)) {
+            //     resolve()
+            // } else {
+            //     kill(el)
+            // }
 
         } catch (e) {
             console.warn(e)
