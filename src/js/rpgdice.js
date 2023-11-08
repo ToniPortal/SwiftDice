@@ -3,12 +3,13 @@ import * as THREE from '/th/three.module.js';
 var scene, camera, renderer, // la camera et la scene
     world, body1, groundBody, //Le sol et les corps de physique
     cube1, ground, moveplayer = true, // Les joueurs 1 cube
-    dice = [], maxrebonddice = 3, // Les lancée de dès
+    dice = [], maxrebonddice = 4, // Les lancée de dès
     ennemy = [], choicy, //Coresspond au variable de l'ennemy
     ennemymain = [];
 
-const timeDice = 750;
-const timeTour = 1500;
+const timeDice = 400;
+const timeTour = 1000;
+const spawnYcube = 10;
 
 var character = [ // Les personnage
     {
@@ -75,11 +76,11 @@ function init() {
     world = new OIMO.World({
         info: true,
         random: true,  // randomize sample
-        gravity: [0, -20, 0],
+        gravity: [0, -40, 0],
     });
 
     // Create ground
-    var groundSize = [50, 1, 50]; // Adjust the size as needed
+    var groundSize = [75, 1, 75]; // Adjust the size as needed
     var groundPosition = [0, -5, 0]; // Position it slightly below the center
     groundBody = world.add({
         type: 'box',
@@ -122,8 +123,13 @@ function init() {
     camera.lookAt(lookat);
 
 
+    // Enregistrez la position et la rotation de la caméra lors de son initialisation
+    initialCameraPosition = camera.position.clone();
+    initialCameraRotation = camera.rotation.clone();
+
     //Ajout du joueurs a la scene :
     scene.add(cube1);
+
 
 } //Fin init
 
@@ -148,7 +154,11 @@ function createdice(allye, bl, x, y, z) {
     scene.add(cube2);
 
     if (allye) {
-        dice.push({ cube: cube2, body: body2, name: character[bl].name, face: character[bl].face, facerand: rand(0, 5), clicked: false, rebond: 0, ally: allye, force: { x: rand(-3, 3), y: rand(6, 10), z: rand(-3, 3) }, rotation: { x: 5, y: 5, z: 5 } });
+        dice.push({
+            cube: cube2, body: body2, name: character[bl].name,
+            face: character[bl].face, facerand: rand(0, 5), choiceface: (character[bl].face)[rand(0, 5)], clicked: false, rebond: 0, ally: allye,
+            force: { x: rand(-2, 2), y: rand(12, 18), z: rand(-2, 2) }, rotation: { x: 5, y: 5, z: 5 }
+        });
     } else {
         dice.push({ cube: cube2, body: body2, name: ennemynames[bl].name, face: ennemynames[bl].face, rebond: 0, facerand: rand(0, 5), ally: allye, force: { x: rand(-3, 3), y: rand(6, 10), z: rand(-3, 3) }, rotation: { x: 5, y: 5, z: 5 } });
     }
@@ -163,8 +173,9 @@ function allyinterval() {
     let bl = 0
     allyinter = setInterval(async () => {
         if (dice.length < 5) {
-            createdice(true, bl, x, 5, 0);
+            createdice(true, bl, x, spawnYcube, 0);
             x += 0.2;
+
         } else {
             clearInterval(allyinter) //Finir les lancer des dès
 
@@ -183,7 +194,7 @@ function ennemyinterval() {
     let bl = 0;
     ennemyinter = setInterval(async () => {
         if (dice.length < ennemy.length) {
-            createdice(false, bl, 0, 5, 0);
+            createdice(false, bl, 0, spawnYcube, 0);
         } else {
             clearInterval(ennemyinter) //Finir les lancer des dès
 
@@ -414,7 +425,7 @@ function death(string) {
 function rand(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
-    return Math.floor(Math.random() * (max - min + 1) + min); // The maximum is inclusive and the minimum is inclusive
+    return Math.floor(Math.random() * (max - min + 1) + min);
 }
 
 var notexecutebl = false; // variable pour que on ne puisse pas faire la collision de mainennemy plusieurs fois
@@ -470,6 +481,11 @@ function animate() {
                 } else if (cube.rotation.z < 0.01) {
                     cube.rotation.z += 0.01;
                 }
+                if (el.rebond == maxrebonddice + 1) {
+                    cube.rotation.set(0, 0, 0)
+                    body.linearVelocity.set(0, 0, 0);
+                }
+                // body.sleep()
             } else {
 
                 cube.rotation.x += el.rotation.x;
@@ -505,13 +521,19 @@ function animate() {
             // Collision détectée entre cube1 et cube2
             // Faites quelque chose en réponse à la collision ici.
             if (!notexecutebl) {
-                notexecutebl = true;
-                moveplayer = false;
-                console.log("Distance Ennnemy0", ennemymain)
-                startHud();
-                kill(ennemymain[0])
-                ennemymain.splice(0, 1);
-                ennemyinterval();
+                notexecutebl = true; // Pour pour activer collision plusieur fois
+                moveplayer = false; //Player ne doit pas bouger
+                console.log("Distance Ennnemy0", ennemymain) // quel ennemy ?
+                scene.remove(cube1); // Remove visuel player1(cube1)
+
+                document.getElementById("btnreroll").style.display = ""; //Réafficher le button de reroll
+                document.getElementById("btnfinishtour").style.display = ""; //Réafficher le button de finir le tour
+
+                resetCamera() //Reset la camera en cool
+                startHud(); //Afficher l'hud
+                kill(ennemymain[0]) // Kill l'affichage
+                ennemymain.splice(0, 1); // Le suppriemr de l'array
+                ennemyinterval(); // Démarrer le jeu en commeçant pour la boucle des ennemy
             }
 
         }
@@ -615,23 +637,22 @@ function findCharacter(name) {
 
 function addDiceAlly(item) {
     let dice = item[0]
-    let quoi = dice.face[dice.facerand];
+    let quoi = dice.choiceface;
     document.getElementById(`titreclasse${item[1].index}`).lastElementChild.lastElementChild.innerText = `${quoi}`;
     item[1].choiceface = quoi;
 
 }
 
 var clikdice = 0;
-var anciennecam = [];
+
+var initialCameraPosition;
+var initialCameraRotation;
+
+var actualDice;
 
 //Détecter le click sur un dès pour
 async function onMouseClick(event) {
     try {
-        if(anciennecam && anciennecam != []){
-            resetCam()
-        }
-        anciennecam = camera.position.clone();
-
         // Récupérez les coordonnées du clic par rapport à la fenêtre
         const mouse = new THREE.Vector2();
         mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -656,30 +677,19 @@ async function onMouseClick(event) {
                 // Exécutez votre code pour le clic sur un cube dormant ici
 
                 if (!diceItem.clicked) {
-                    console.log('Cube dormant cliqué !');
+                    console.log('Cube dormant cliqué ! nb=', clikdice);
 
-                    // clikdice++;
-                    // diceItem.clicked = true;
+                    actualDice = diceItem;
 
-                    // addDiceAlly([diceItem, findCharacter(diceItem.name)]); // On lui passe le cube[0] et le personnage[1]
-
-                    let dicePosition = diceItem.body.getPosition();
-                    let cameraHeight = 10; // Hauteur de la caméra par rapport au diceItem
-            
-                    // Définissez la position de la caméra au-dessus du diceItem
-                    camera.position.set(dicePosition.x, dicePosition.y + cameraHeight, dicePosition.z);
-            
-                    // Faites en sorte que la caméra regarde le point (0, 0, 0)
-                    camera.lookAt(dicePosition.x, dicePosition.y, dicePosition.z);
-
+                    scene.add(camera)
+                    camera.position.set(diceItem.body.position.x + 3, -1, diceItem.body.position.z + 5);
+                    document.getElementById("divdice").style.display = ""; //réafficher btn de click
+                    affichageInfo(`${diceItem.choiceface} dmg ${(findCharacter(diceItem.name)).dmg}`);
+                } else {
+                    affichageInfo("Déjà clickée")
                 }
 
-                if (clikdice == dice.length) {
-                    affichageInfo("Les ennemy attaque en premier !"); // On dit au joueurs
 
-                    await killAllDice(); // Désaficher tout dès !
-                    createBtnAtk() //Création des button pour attaquer
-                }
 
             }
         }
@@ -689,13 +699,16 @@ async function onMouseClick(event) {
 
 }
 
-function resetCam() {
-    if (anciennecam) {
-        camera.position.set(20, 20, 40);
-        // camera.position.copy(anciennecam);
+function resetCamera() {
+    if (initialCameraPosition && initialCameraRotation) {
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(20, 15, 40);
         camera.lookAt(lookat);
+        scene.add(camera)
     }
 }
+
+
 
 function choicingAlly(ch, el) {
     return new Promise((resolve) => {
@@ -837,7 +850,7 @@ function startAllyFight() {
 
 //Gestion de bouger le personnage principal "cube1" & "body1"
 document.addEventListener("keydown", (e) => {
-    console.log(e.key)
+    console.log(`${e.key}`, camera.position)
 
     if (moveplayer) { // Variable qui dit oui ou nom l'utulisateur peut bouger.
         switch (e.key) {
@@ -872,7 +885,15 @@ document.addEventListener("keydown", (e) => {
             camera.position.z -= 1;
             break;
         case "Escape":
-            resetCam()
+            //Touche pour reset camera
+            affichageInfo("Choisir un autre dès");
+            resetCamera()
+            break;
+        case "Control":
+            //Touche pour confirmer choix dès
+            lockDice();
+            affichageInfo("Choisir un autre dès");
+            resetCamera();
             break;
     }
 
@@ -884,8 +905,8 @@ document.addEventListener("keydown", (e) => {
 
 window.onload = function () {
     // Créez un élément de bouton HTML
-    const button = document.createElement("button");
-    button.innerHTML = "Start Fight";
+    let button = document.createElement("button");
+    button.innerText = "Start Fight";
     button.id = "btninfotop"
     button.style.display = "none"
     button.style.top = "10px";
@@ -903,4 +924,113 @@ window.onload = function () {
 
     });
 
+    let button2 = document.createElement("button");
+    button2.innerText = "Reroll";
+    button2.id = "btnreroll"
+    button2.style.display = "none"
+    // button2.style.top = "10px";
+    // button2.style.left = "10px";
+
+    document.getElementById("divinfotop").appendChild(button2);
+
+    button2.addEventListener("click", function () {
+
+        rerollDice();
+
+    });
+
+
+    let button3 = document.createElement("button");
+    button3.innerText = "Finir Tour";
+    button3.id = "btnfinishtour"
+    button3.style.display = "none"
+
+    document.getElementById("divinfotop").appendChild(button3);
+
+    button3.addEventListener("click", function () {
+
+        finishTour();
+
+    });
+
+    let div = document.createElement("div");
+    div.style.display = "none";
+    div.id = "divdice";
+
+    let button4 = document.createElement("button");
+    button4.innerText = "Reset Camera";
+    button4.id = "btnresetcam"
+
+    div.appendChild(button4);
+
+    button4.addEventListener("click", function () {
+
+        resetCamera();
+
+    });
+    let button5 = document.createElement("button");
+    button5.innerText = "Verrouillez";
+    button5.id = "btnlockdice"
+
+    div.appendChild(button5);
+
+    button5.addEventListener("click", function () {
+
+        lockDice();
+        affichageInfo("Choisir un autre dès");
+        resetCamera();
+
+    });
+
+    document.getElementById("divinfotop").appendChild(div);
+
+}
+function finishTour() {
+    createBtnAtk();
+    //Finir la function pour bien vérifier les dès que on finise le tour
+}
+
+function rerollDice() {
+
+    dice.forEach(die => {
+        die.rebond = 0;
+        die.clicked = false;
+
+        // Réinitialisez la rotation du dé
+        die.cube.rotation.set(0, 0, 0);
+
+        // Réinitialisez la position du dé
+        die.body.position.set(0, spawnYcube, 0);
+
+        // Appliquez une nouvelle force aléatoire pour le rebond
+        die.force = {
+            x: rand(-2, 2),
+            y: rand(12, 18),
+            z: rand(-2, 2)
+        };
+
+        // Définissez la rotation initiale du dé
+        die.rotation = { x: 5, y: 5, z: 5 };
+    });
+
+    document.getElementById("divdice").style.display = "none";
+    affichageInfo("Reroll !"); // Effacez les informations précédentes
+
+}
+
+async function lockDice() {
+    clikdice++;
+    actualDice.clicked = true;
+
+    addDiceAlly([actualDice, findCharacter(actualDice.name)]); // On lui passe le cube[0] et le personnage[1]
+    kill(actualDice);
+    dice.slice(dice.indexOf(actualDice), 1);
+
+    if (clikdice == dice.length) {
+        affichageInfo("Les ennemy attaque en premier !"); // On dit au joueurs
+
+        await killAllDice(); // Désaficher tout dès !
+        createBtnAtk() //Création des button pour attaquer
+        affichageInfo("Vous pouvez commencer a attaquer !")
+    }
 }
