@@ -16,20 +16,21 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 14
+          node-version: 18
 
       - name: Install dependencies
         run: npm install
 
       - name: Build and deploy
         run: |
-          npm start
-          mkdir deploy
-          cp -R views deploy/
-          cp -R src deploy/
-          cp -R node_modules deploy/
-          cp -R index.js deploy/
-          touch deploy/.nojekyll
+          npm start &
+          sleep 10  # Ajoutez un délai pour donner du temps à l'application pour démarrer (ajustez si nécessaire)
+          echo "Contents of deploy directory:"
+          ls -R deploy/
+          ps aux | grep node
+          cat deploy/.nojekyll  # Assurez-vous que le fichier .nojekyll a été créé
+          jobs
+          wait  # Attend que toutes les tâches en arrière-plan se terminent
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
