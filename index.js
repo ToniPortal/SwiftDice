@@ -21,7 +21,7 @@ app.use(compression());
 const server = app.listen(port, ip, err => {
     err ?
         console.log("Error in server setup") :
-        console.log(`Worker ${process.pid} started\nServeur lancer sur: http://localhost:${port}`);
+        console.log(`Worker ${process.pid} started\nServeur lancer sur: ${ip}:${port}`);
 
 });
 
