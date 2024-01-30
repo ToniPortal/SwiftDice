@@ -13,7 +13,7 @@ app = express();
 app.set('view engine', 'ejs');
 
 app.use('/src', express.static(path.join(__dirname, 'src')));
-app.use('/th', express.static(path.join(__dirname, '/node_modules/three/build')));
+app.use('/th', express.static(path.join(__dirname, 'build')));
 
 app.use(compression());
 
@@ -21,7 +21,7 @@ app.use(compression());
 const server = app.listen(port, ip, err => {
     err ?
         console.log("Error in server setup") :
-        console.log(`Worker ${process.pid} started\nServeur lancer sur: ${ip}:${port}`);
+        console.log(`Worker ${process.pid} started\nServeur lancer sur: http://${ip}:${port}`);
 
 });
 
