@@ -325,15 +325,18 @@ function createennemy() {
 
         document.getElementById("ennemydiv").style = `position: relative;bottom: 460px;left: ${window.innerWidth / 1.176}px;`
 
-        let nbennemy = 1; // Initialiser nombre d'ennemy
-        let vpv = rand(10, 20);
+        let nbennemy = 1; // Initialiser nombre d'ennemy (bug si + de 1 ennemy sur choisir en terme d'afficahge et de comptage de click reste a 3 alors que il a 6 btn)
+        let vpv = 999;
         //Changer le nb de monstre par rapport a la difficulter du nombre de monstre
         if (choicy.difficulty == "option1") {
             // nbennemy = 1; //Si c'est facile
+            vpv = rand(5, 8)
         } else if (choicy.difficulty == "option2") {
-            // nbennemy = 2; // Si c'est normal
+            nbennemy = 1; // Si c'est normal
+            vpv = rand(10, 20)
         } else {
             // nbennemy = 4 //Si c'est difficile
+            vpv = rand(20, 30)
         }
 
 
@@ -762,7 +765,7 @@ function createBtnAtk() {
 
                 let onButtonClick = async function () {
                     await choicingAlly(ch, el);
-
+                    console.log(`Il reste ${choiceennemyforally} a cliquer !`)
                     if (choiceennemyforally === 0) {
                         btnfight();
                     }
@@ -904,7 +907,6 @@ document.addEventListener("keydown", (e) => {
 
 
 window.onload = function () {
-    // Créez un élément de bouton HTML
     let button = document.createElement("button");
     button.innerText = "Start Fight";
     button.id = "btninfotop"
@@ -912,12 +914,10 @@ window.onload = function () {
     button.style.top = "10px";
     button.style.left = "10px";
 
-    // Ajoutez le bouton au DOM
     document.getElementById("divinfotop").appendChild(button);
 
-    // Définissez une action pour le bouton lorsqu'il est cliqué
     button.addEventListener("click", function () {
-        // Code à exécuter lorsque le bouton est cliqué, par exemple, pour démarrer le combat.
+
         btnfight();
         delBtnAtk();
         startEnnemyFight();
@@ -985,10 +985,47 @@ window.onload = function () {
     document.getElementById("divinfotop").appendChild(div);
 
 }
-function finishTour() {
+
+async function finishTour() {
     createBtnAtk();
-    //Finir la function pour bien vérifier les dès que on finise le tour
+    // Finir la fonction pour vérifier correctement les dés à la fin du tour
+
+    let diceFinishNumber = 0; // Compteur pour suivre le nombre de dés terminés
+
+    // Parcourir chaque dé dans la liste dice
+    dice.forEach(async diceItem => {
+        if (diceItem && diceItem.body.sleeping) { // Vérifier si le dé existe et s'il est endormi
+            diceFinishNumber++; // Incrémenter le compteur de dés terminés
+            console.log("Nombre de dés terminés :", diceFinishNumber);
+
+            // Vérifier si tous les 5 dés sont terminés
+            if (diceFinishNumber === 5) {
+                // Si tous les dés sont terminés, procéder au traitement automatique
+                console.log("Tous les dés sont terminés !");
+
+                // Accédez à chaque dé individuellement et effectuez les traitements nécessaires
+                dice.forEach(async diceFItem => {
+                    console.log("Nom du dé :", diceFItem.name);
+                    console.log("Cube du dé :", diceFItem.cube);
+                    console.log("Face choisie :", diceFItem.choiceface);
+
+                    actualDice = await diceFItem; 
+                    await lockDice();
+                });
+
+
+            } else {
+                // Si tous les dés ne sont pas encore terminés, affichez un message indiquant qu'il manque des dés
+                affichageInfo("En attente de tous les dés");
+            }
+        } else {
+            // Si un dé n'est pas encore endormi, réinitialisez le compteur et affichez un message
+            diceFinishNumber = 0;
+            affichageInfo("En attente des dés");
+        }
+    });
 }
+
 
 function rerollDice() {
 
@@ -1027,10 +1064,15 @@ async function lockDice() {
     dice.slice(dice.indexOf(actualDice), 1);
 
     if (clikdice == dice.length) {
-        affichageInfo("Les ennemy attaque en premier !"); // On dit au joueurs
-
-        await killAllDice(); // Désaficher tout dès !
-        createBtnAtk() //Création des button pour attaquer
-        affichageInfo("Vous pouvez commencer a attaquer !")
+        affichCombat()
     }
+}
+
+async function affichCombat() {
+    clikdice = 0;
+    affichageInfo("Les ennemy attaque en premier !"); // On dit au joueurs
+
+    await killAllDice(); // Désaficher tout dès !
+    createBtnAtk() //Création des button pour attaquer
+    affichageInfo("Vous pouvez commencer a attaquer !")
 }
