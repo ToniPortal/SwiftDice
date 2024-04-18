@@ -7,9 +7,7 @@
 
 ## Links
 
-- [Repo](https://github.com/Bouftout/compagnioncube)
-
-- [Bugs](https://github.com/Bouftout/compagnioncube/issues)
+- [Repo](https://github.com/Bouftout/SwiftDice)
 
 ## Image
 
